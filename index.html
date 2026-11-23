@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover: Die App nutzt den ganzen Bildschirm, auch neben Notch/Dynamic Island.
+       Damit nichts verdeckt wird, rechnet das CSS die "Safe Areas" mit ein. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Schuldenbuch</title>
+  <meta name="description" content="Schulden und Rückzahlungen im Blick behalten – komplett offline.">
+
+  <!-- iOS: Vom Home-Bildschirm aus als eigenständige App starten (ohne Safari-Leiste) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Schuldenbuch">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Farbe der Statusleiste, passend zu hell/dunkel -->
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Hier zeichnet app.js die jeweilige Ansicht hinein -->
+  <main id="app"></main>
+
+  <!-- Großer "+"-Button zum schnellen Eintragen -->
+  <button type="button" class="fab" data-action="new-debt" aria-label="Neue Schuld eintragen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <!-- Tab-Leiste unten, wie bei iOS-Apps -->
+  <nav class="tabbar" aria-label="Hauptnavigation">
+    <a class="tab" data-tab="home" href="#/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14c2.4.3 4 2.4 4 5"/></svg>
+      <span>Übersicht</span>
+    </a>
+    <a class="tab" data-tab="history" href="#/verlauf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+      <span>Verlauf</span>
+    </a>
+    <a class="tab" data-tab="stats" href="#/statistik">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20v-8M12 20V5M18 20v-5M3 20h18"/></svg>
+      <span>Statistik</span>
+    </a>
+  </nav>
+
+  <!-- Hier erscheinen die von unten hochfahrenden Fenster (Formulare, Details) -->
+  <div id="sheet-root"></div>
+
+  <!-- Reihenfolge ist wichtig: app.js benutzt die anderen Dateien -->
+  <script src="js/money.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
