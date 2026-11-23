@@ -110,3 +110,38 @@ const DateUtil = {
     return DateUtil.fromDate(d);
   },
 };
+
+/*
+ * IBAN – prüfen und formatieren.
+ * Gespeichert und kopiert wird OHNE Leerzeichen ("DE89370400440532013000"),
+ * denn so akzeptiert sie jede Banking-App beim Einfügen.
+ * Angezeigt wird sie in Vierergruppen, damit man sie gut lesen kann.
+ */
+const Iban = {
+  /** Leerzeichen entfernen, Großbuchstaben: " de89 3704…" → "DE893704…" */
+  normalize(text) {
+    return String(text).replace(/\s+/g, '').toUpperCase();
+  },
+
+  /** "DE89370400440532013000" → "DE89 3704 0044 0532 0130 00" */
+  format(iban) {
+    return iban.replace(/(.{4})/g, '$1 ').trim();
+  },
+
+  /**
+   * Prüft Aufbau und Prüfziffer (Verfahren "Modulo 97").
+   * Fängt fast alle Tippfehler ab, z. B. vertauschte oder falsche Ziffern.
+   */
+  isValid(iban) {
+    if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
+    if (iban.startsWith('DE') && iban.length !== 22) return false; // deutsche IBANs haben genau 22 Stellen
+    // Die ersten 4 Zeichen ans Ende stellen, Buchstaben in Zahlen umwandeln (A=10, B=11, …)
+    const moved = iban.slice(4) + iban.slice(0, 4);
+    let rest = 0;
+    for (const ch of moved) {
+      const number = /[A-Z]/.test(ch) ? String(ch.charCodeAt(0) - 55) : ch;
+      for (const digit of number) rest = (rest * 10 + Number(digit)) % 97;
+    }
+    return rest === 1;
+  },
+};

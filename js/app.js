@@ -254,6 +254,8 @@ const ICON = {
   trash: svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),
   down: svg('<path d="M12 5v14M6 13l6 6 6-6"/>', 'stroke-width="2.5"'),
   up: svg('<path d="M12 19V5M6 11l6-6 6 6"/>', 'stroke-width="2.5"'),
+  copy: svg('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>'),
+  bank: svg('<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>'),
 };
 
 /** Kurze Meldung oben am Bildschirm. */
@@ -426,11 +428,110 @@ function viewHome() {
         <div><span class="label">Ich schulde</span><span class="amount neg">${Money.format(t.iOwe)}</span></div>
       </div>
     </section>
+    ${ibanCard()}
     <div class="section-head">
       <h2>Personen</h2>
       <button type="button" class="link-btn" data-action="new-person">Hinzufügen</button>
     </div>
     ${list}`;
+}
+
+/* ---------- Eigene IBAN (nur auf diesem Gerät gespeichert) ---------- */
+function savedIban() {
+  return localStorage.getItem('iban') || '';
+}
+
+function ibanCard() {
+  const iban = savedIban();
+  if (!iban) {
+    return `
+      <section class="card">
+        <button type="button" class="row" data-action="edit-iban">
+          <span class="ev-icon payment">${ICON.bank}</span>
+          <span class="row-main">
+            <span class="row-title">Eigene IBAN hinterlegen</span>
+            <span class="row-sub">Zum schnellen Kopieren · bleibt nur auf diesem Gerät</span>
+          </span>
+          <span class="chevron" aria-hidden="true">›</span>
+        </button>
+      </section>`;
+  }
+  return `
+    <section class="card iban-card" aria-label="Meine IBAN">
+      <div class="iban-head">
+        <span class="label">Meine IBAN</span>
+        <button type="button" class="link-btn small" data-action="edit-iban">Ändern</button>
+      </div>
+      <button type="button" class="iban-copy" data-action="copy-iban" aria-label="IBAN kopieren">
+        <span class="iban-value">${esc(Iban.format(iban))}</span>
+        <span class="chip" data-copy-label>${ICON.copy}IBAN kopieren</span>
+      </button>
+    </section>`;
+}
+
+/** Kopiert Text in die Zwischenablage (mit Notlösung für ältere Browser). */
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.cssText = 'position:fixed;top:0;opacity:0';
+    document.body.appendChild(area);
+    area.select();
+    area.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    area.remove();
+    return ok;
+  }
+}
+
+async function copyIban(button) {
+  const ok = await copyText(savedIban()); // ohne Leerzeichen kopieren
+  if (!ok) { toast('Kopieren hat nicht geklappt'); return; }
+  toast('IBAN kopiert ✓');
+  const label = button.querySelector('[data-copy-label]');
+  label.innerHTML = '✓ Kopiert';
+  setTimeout(() => { label.innerHTML = `${ICON.copy}IBAN kopieren`; }, 1500);
+}
+
+function openIbanForm() {
+  const iban = savedIban();
+  const form = openSheet({
+    title: 'Meine IBAN',
+    body: `
+      <div class="card form">
+        <label class="field"><span>IBAN</span>
+          <input name="iban" placeholder="DE00 0000 0000 0000 0000 00" value="${esc(iban ? Iban.format(iban) : '')}"
+                 autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="42">
+        </label>
+      </div>
+      <p class="form-error" role="alert"></p>
+      <p class="hint" style="margin-top:0">Wird nur auf diesem Gerät gespeichert – nicht im Internet und nicht auf GitHub.
+        Beim Kopieren wird sie ohne Leerzeichen eingefügt, so akzeptiert sie jede Banking-App.</p>
+      ${iban ? '<button type="button" class="btn destructive" data-action="delete-iban">IBAN entfernen</button>' : ''}`,
+    onSubmit: async (f) => {
+      const value = Iban.normalize(f.iban.value);
+      if (!value) fail('Bitte gib deine IBAN ein.');
+      if (!Iban.isValid(value)) fail('Diese IBAN ist ungültig – bitte auf Tippfehler prüfen.');
+      localStorage.setItem('iban', value);
+      closeSheet();
+      render();
+      toast('IBAN gespeichert');
+    },
+  });
+  form.iban.focus({ preventScroll: true });
+}
+
+async function deleteIban() {
+  const ok = await confirmDialog({ title: 'IBAN entfernen?', message: 'Die IBAN wird von diesem Gerät gelöscht.', confirmLabel: 'Entfernen' });
+  if (!ok) return;
+  localStorage.removeItem('iban');
+  closeSheet();
+  render();
+  toast('IBAN entfernt');
 }
 
 function personRow(person) {
@@ -995,6 +1096,9 @@ const actions = {
   'delete-payment': (el) => deletePayment(el.dataset.id),
   'set-filter': (el) => { ui[el.dataset.scope + 'Filter'] = el.dataset.value; render(); },
   'set-range': (el) => { ui.statsRange = el.dataset.value; render(); },
+  'copy-iban': (el) => copyIban(el),
+  'edit-iban': () => openIbanForm(),
+  'delete-iban': () => deleteIban(),
 };
 
 document.addEventListener('click', (event) => {
