@@ -10,7 +10,7 @@
  * Tipp: Wenn du etwas Grundlegendes änderst (z. B. Dateien hinzufügst oder umbenennst),
  * erhöhe die Versionsnummer unten (v1 → v2). Dann wird der alte Cache komplett ersetzt.
  */
-const CACHE = 'schuldenbuch-v3';
+const CACHE = 'schuldenbuch-v4';
 
 // Alle Dateien, die die App zum Laufen braucht
 const FILES = [

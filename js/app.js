@@ -428,12 +428,12 @@ function viewHome() {
         <div><span class="label">Ich schulde</span><span class="amount neg">${Money.format(t.iOwe)}</span></div>
       </div>
     </section>
-    ${ibanCard()}
     <div class="section-head">
       <h2>Personen</h2>
       <button type="button" class="link-btn" data-action="new-person">Hinzufügen</button>
     </div>
-    ${list}`;
+    ${list}
+    ${ibanCard()}`;
 }
 
 /* ---------- Eigene IBAN (nur auf diesem Gerät gespeichert) ---------- */

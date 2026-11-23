@@ -263,10 +263,10 @@ a { color: var(--blue); text-decoration: none; -webkit-touch-callout: none; }
   text-align: left;
 }
 .iban-value {
-  font-size: min(18px, 4.6vw); /* auf kleinen Bildschirmen etwas kleiner */
+  font-size: min(20px, 5.2vw); /* auf kleinen Bildschirmen etwas kleiner */
   font-weight: 600;
   white-space: nowrap; /* IBAN immer in einer Zeile */
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums; /* wie die Beträge: alle Ziffern gleich breit */
 }
 .iban-copy .chip {
   display: flex;
