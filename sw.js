@@ -10,7 +10,7 @@
  * Tipp: Wenn du etwas Grundlegendes änderst (z. B. Dateien hinzufügst oder umbenennst),
  * erhöhe die Versionsnummer unten (v1 → v2). Dann wird der alte Cache komplett ersetzt.
  */
-const CACHE = 'schuldenbuch-v1';
+const CACHE = 'schuldenbuch-v2';
 
 // Alle Dateien, die die App zum Laufen braucht
 const FILES = [
@@ -27,9 +27,12 @@ const FILES = [
   './icons/icon-512.png',
 ];
 
-// Installation: alle Dateien in den Cache legen
+// Installation: alle Dateien in den Cache legen.
+// cache: 'reload' = wirklich frisch vom Server holen, nicht aus dem Browser-Zwischenspeicher.
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)));
+  event.waitUntil(caches.open(CACHE).then((cache) =>
+    cache.addAll(FILES.map((url) => new Request(url, { cache: 'reload' })))
+  ));
   self.skipWaiting();
 });
 

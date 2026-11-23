@@ -91,8 +91,17 @@ function totals() {
   return { owedToMe, iOwe, net: owedToMe - iOwe };
 }
 
+/** Alphabetisch (für Auswahllisten). */
 function sortedPersons() {
   return [...state.persons].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+
+/**
+ * Nach Saldo (für die Übersicht): oben, wer dir am meisten schuldet,
+ * unten, wem du am meisten schuldest. Bei gleichem Saldo alphabetisch.
+ */
+function personsByBalance() {
+  return sortedPersons().sort((a, b) => balanceOf(b.id) - balanceOf(a.id));
 }
 
 /** Satz wie "Max schuldet dir" oder "Du schuldest Lisa". */
@@ -349,6 +358,8 @@ function openSheet({ title, body, onSubmit, submitLabel = 'Sichern' }) {
 
 function closeSheet() {
   const token = ++sheetToken;
+  // Tastatur schließen (Eingabefeld verlassen), bevor das Sheet verschwindet
+  if (document.activeElement && sheetRoot.contains(document.activeElement)) document.activeElement.blur();
   sheetRoot.classList.remove('open');
   document.body.classList.remove('sheet-open');
   // Nach der Animation den Inhalt entfernen (falls nicht schon ein neues Sheet offen ist)
@@ -395,7 +406,7 @@ function viewHome() {
   if (t.net > 0) { netClass = 'pos'; netText = 'Unterm Strich wird dir mehr geschuldet'; }
   if (t.net < 0) { netClass = 'neg'; netText = 'Unterm Strich schuldest du mehr'; }
 
-  const persons = sortedPersons();
+  const persons = personsByBalance();
   const list = persons.length
     ? `<ul class="list card persons">${persons.map(personRow).join('')}</ul>`
     : emptyState('📒', 'Noch keine Einträge',
@@ -716,7 +727,7 @@ function openDebtForm({ debt = null, personId = null } = {}) {
   const newPersonRow = form.querySelector('[data-new-person]');
   form.person.addEventListener('change', () => {
     newPersonRow.hidden = form.person.value !== '__new';
-    if (!newPersonRow.hidden) form.newName.focus();
+    if (!newPersonRow.hidden) form.newName.focus({ preventScroll: true });
   });
 }
 
@@ -763,7 +774,9 @@ function openPersonForm(person = null) {
       }
     },
   });
-  form.personName.focus();
+  // preventScroll: Das Sheet fährt gerade noch von unten herein. Ohne diese Option würde
+  // Safari die ganze Seite nach unten scrollen, um das (noch verdeckte) Feld zu zeigen.
+  form.personName.focus({ preventScroll: true });
 }
 
 /* ---------- Rückzahlung erfassen ---------- */
@@ -1026,10 +1039,16 @@ function render() {
   });
 }
 
+/** Ganz nach oben scrollen – auch noch einmal, nachdem die iPhone-Tastatur zugeklappt ist. */
+function scrollToTop() {
+  window.scrollTo(0, 0);
+  setTimeout(() => window.scrollTo(0, 0), 350);
+}
+
 window.addEventListener('hashchange', () => {
   closeSheet();
   render();
-  window.scrollTo(0, 0);
+  scrollToTop();
 });
 
 // Diagramme neu zeichnen, wenn sich die Breite ändert (z. B. Handy gedreht)
